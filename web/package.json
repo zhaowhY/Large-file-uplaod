@@ -1,0 +1,46 @@
+{
+  "name": "vue-simple-cli",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "lint": "vue-cli-service lint",
+    "start": "npm run serve",
+    "build:test": "vue-cli-service build --mode integration",
+    "build": "vue-cli-service build",
+    "analyze": "vue-cli-service build --report"
+  },
+  "dependencies": {
+    "axios": "0.18.0",
+    "crypto-js": "^4.0.0",
+    "element-ui": "2.15.0",
+    "i": "^0.3.6",
+    "lodash": "4.17.15",
+    "mockjs": "1.1.0",
+    "npm": "^7.6.0",
+    "spark-md5": "^3.0.1",
+    "vue": "2.5.16",
+    "vue-router": "3.0.0",
+    "vuex": "3.3.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "3.12.1",
+    "@vue/cli-plugin-eslint": "3.12.1",
+    "@vue/cli-service": "3.12.1",
+    "@vue/eslint-config-airbnb": "3.0.1",
+    "babel-plugin-component": "1.1.1",
+    "node-sass": "4.14.1",
+    "postcss-px2rem": "0.3.0",
+    "postcss-px2rem-exclude": "0.0.6",
+    "px2rem-loader": "0.1.9",
+    "sass-loader": "8.0.0",
+    "svg-sprite-loader": "4.2.5",
+    "vue-cli-plugin-element": "1.0.1",
+    "vue-template-compiler": "2.5.16"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
