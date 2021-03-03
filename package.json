@@ -1,11 +1,10 @@
 {
   "name": "bigfile-upload",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Large files are uploaded in slices",
+  "main": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "kongkong99",
   "license": "ISC"
 }
