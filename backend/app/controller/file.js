@@ -76,8 +76,6 @@ class ProjectController extends Controller {
   }
 
   async upload() {
-    const delay = time => new Promise(resolve => setTimeout(resolve, time));
-    await delay(1000);
     const { ctx } = this;
     const parts = ctx.multipart();
 

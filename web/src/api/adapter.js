@@ -1,32 +1,81 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-use-before-define */
 /**
  * axios
  * api: https://github.com/axios/axios
  */
 
 import axios from 'axios';
-import { domains } from '@/config';
+
+const formatResponse = (options = {}) => (response = {}) => {
+  const { data: { code, data }, data: rawData } = response;
+  if (options.raw) {
+    return rawData;
+  }
+  if (code === 200) {
+    return data;
+  }
+  return Promise.reject(response.data);
+};
 
 const getInstance = (baseURL) => {
-  const instance = axios.create({
+  const option = {
     baseURL,
     timeout: 30000,
     withCredentials: true,
-  });
-  instance.interceptors.response.use((response = {}) => {
-    const { data: { code, data } } = response;
-    if (code === 200) {
-      return data;
-    }
-    return Promise.reject(response.data);
-  }, error => Promise.reject(error));
+  };
+
+  const instance = axios.create(option);
+  instance.interceptors.response.use(
+    formatResponse(),
+    error => Promise.reject(error)
+  );
+
+  // 原始输出，不需要处理返回值
+  instance.raw = axios.create(option);
+  instance.raw.interceptors.response.use(
+    formatResponse({ raw: true }),
+    error => Promise.reject(error)
+  );
+
   return instance;
 };
 
-export const demo = getInstance(domains.demo);
+export const apiDecorator = (baseURL, apiLists, extraOptions = {}) => {
+  let instance = getInstance(baseURL, extraOptions);
+  if (extraOptions.raw) instance = instance.raw; // 输出原始值
+  const adapter = {};
+  apiLists.forEach(({ name, method, url }) => {
+    adapter[name] = (opts = {}, extraOpts) => {
+      const options = {};
+      if (String.prototype.toLowerCase.call(method) === 'get') {
+        options.params = opts;
+      } else {
+        options.data = opts;
+      }
+      return instance({
+        url: isREST(url) ? convertRESTAPI(url, opts) : url,
+        method,
+        ...options,
+        ...extraOpts
+      });
+    };
+  });
+  return adapter;
+};
 
-/**
- * TODO: 在实际项目中，考虑是否要采用第二种
- * 关于return Promise.reject(response.data),或者弹出框提示错误
- * 1. return Promise.reject(response.data)  不catch (error)，会阻塞函数中的代码继续运行
- * 2. 弹出框提示错误，不return 错误  可以统一处理错误，方便修改，不阻塞代码的运行
- */
+const isREST = url => /(:|{|})/.test(url);
+
+const convertRESTAPI = (url, opts = {}) => {
+  if (!opts) return url;
+
+  const pathKeys = Object.keys(opts);
+
+  pathKeys.forEach((key) => {
+    const reg = new RegExp(`(:${key}|{${key}})`, 'g');
+    url = url.replace(reg, opts[key]);
+    delete opts[key];
+  });
+
+  return url;
+};

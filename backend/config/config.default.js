@@ -24,6 +24,7 @@ module.exports = appInfo => {
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH,OPTIONS',
     origin: ctx => ctx.get('origin'),
   };
+
   // add your middleware config here
   config.middleware = [];
 

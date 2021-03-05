@@ -1,9 +1,51 @@
 <template>
   <div class="bigfile">
-    <div>
+    <div class="bigfile-uploading">
+      <h1 class="bigfile-main-title">文件上传进度区
+        <el-button
+          v-show="Object.entries(uploadingFiles).length > 0"
+          style="margin-left: 32px; transform: translateY(-5px)"
+          :type="pause? 'primary': 'danger'"
+          size="small"
+          @click="handlePause"
+        ><span style="font-size: 14px">{{pause? '继续': '暂停'}} </span></el-button>
+      </h1>
+      <div
+        v-for="([name, value], index) of Object.entries(uploadingFiles)"
+        :key="index"
+      >
+        <h2>{{name}}</h2>
+        <el-table
+          :data="value.chunks"
+          style="width: 100%"
+          size="mini"
+        >
+          <el-table-column
+            prop="chipIndex"
+            label="分片序号"
+            align="center"
+            width="80"
+          >
+          </el-table-column>
+          <el-table-column
+            prop="progress"
+            label="上传进度"
+          >
+            <template slot-scope="scope">
+              <el-progress :percentage="Number(scope.row.progress)"></el-progress>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+    </div>
+
+    <div class="bigfile-upload">
+      <h1 class="bigfile-main-title">文件上传区</h1>
       <el-upload
         class="upload-demo"
         drag
+        multiple
         action=""
         :show-file-list="false"
         :http-request="uploadFile"
@@ -19,28 +61,13 @@
           slot="tip"
           style="font-size: 15px"
         >
-          <div>允许上传常见类型文件，因服务器配置，要求文件<span style="color: red">不大于5M</span> </div>
+          <div>允许上传常见类型文件，因服务器配置，要求文件<span style="color: red">不大于20M</span> </div>
           <div style="font-weight: bold">但可设置文件分片上传的间隔时间，来体验大文件分片上传</div>
         </div>
       </el-upload>
-      <h2>
-        总分片上传<span style="color: #67C23A">成功</span>进度:
-        <span style="color: #67C23A">{{sucessChip.success}}</span>
-        /{{sucessChip.all}}
-        <el-button
-          style="margin-left: 32px; transform: translateY(-3px)"
-          :type="pause? 'primary': 'danger'"
-          size="small"
-          @click="handlePause"
-        ><span style="font-size: 14px">{{pause? '继续': '暂停'}} </span></el-button>
-      </h2>
-      <h3>
-        总分片上传<span style="color: #F56C6C">失败</span>个数:
-        <span style="color: #F56C6C">{{sucessChip.fail}}</span>
-        /{{sucessChip.all}}
-      </h3>
+
       <div>
-        <h2>上传文件列表</h2>
+        <h2 style="color: #67C23A;">上传成功文件列表</h2>
         <el-table
           :data="fileTableData"
           style="width: 100%"
@@ -48,29 +75,46 @@
           <el-table-column
             prop="filename"
             label="文件名称"
-            width="180"
+            width="140"
           >
           </el-table-column>
+
           <el-table-column
-            prop="url"
-            label="访问链接"
+            prop="state"
+            label="上传状态"
           >
             <template slot-scope="scope">
-              <el-button type="link">{{scope.row.url}}</el-button>
+              <el-tag
+                type="success"
+                v-if="scope.row.url"
+              >上传成功</el-tag>
+              <el-tag
+                type="danger"
+                v-else
+              >上传失败</el-tag>
             </template>
           </el-table-column>
+
           <el-table-column
-            prop="failNum"
-            label="分片上传失败次数"
-            width="180"
+            prop="action"
+            label="操作"
           >
+            <template slot-scope="scope">
+              <el-link
+                :href="scope.row.url"
+                v-if="scope.row.url"
+                type="primary"
+                target="_blank"
+              >点击下载</el-link>
+              <span v-else> - </span>
+            </template>
           </el-table-column>
         </el-table>
       </div>
     </div>
 
     <div class="bigfile-config">
-      <h1>参数配置区</h1>
+      <h1 class="bigfile-main-title">参数配置区</h1>
       <div>
         <h2>分片规则</h2>
         <el-radio-group
@@ -118,22 +162,17 @@ import axios from 'axios';
 
 export default {
   data: () => ({
+    uploadingFiles: {},
     fileTableData: [],
     chunkType: '1',
-    chunkValue: 2,
+    chunkValue: 3,
     chunkInput: {
       min: 1,
       label: '请输入分片数量'
     },
-    intervalTime: 300,
+    intervalTime: 1000,
     pause: false,
     cancelUpload: null, // 取消上传文件网络请求
-    cancelFiles: [],
-    sucessChip: { // 切片总数与上传成功数量
-      all: 0,
-      fail: 0,
-      success: 0
-    }
   }),
   methods: {
     chunkTypeChange(value) {
@@ -149,43 +188,34 @@ export default {
           min: 1,
           label: '请输入分片大小'
         };
-        this.chunkValue = 100;
+        this.chunkValue = 10;
       }
     },
+
 
     handlePause() {
       this.pause = !this.pause;
       if (this.pause) {
         this.cancelUpload.cancel(); // 取消特定的http请求
       } else {
-        this.cancelFiles.forEach((file) => {
-          this.uploadFile({ file, uploadType: 'continue' });
+        Object.entries(this.uploadingFiles).forEach(([, value]) => {
+          this.uploadFile({ file: value.file });
         });
-      }
-    },
-
-    // 设置总切片数数据
-    setSucessChip() {
-      const { fail, success, all } = this.sucessChip;
-      if ((fail + success) === all || this.pause) {
-        this.sucessChip = {
-          all: 0,
-          fail: 0,
-          success: 0
-        };
       }
     },
 
 
     uploadFile(param) {
-      const { file, uploadType } = param;
-      this.setSucessChip();
-      if (this.pause) {
-        this.cancelFiles = [];
-        this.pause = false;
+      const { file } = param;
+      const { name: filename, size } = file;
+      if (size > 1024 * 1024 * 20) {
+        this.$message.warning('文件不能超过20M');
+        return;
       }
-      if (uploadType !== 'continue') {
-        this.cancelFiles.push(file);
+
+      // this.setSucessChip();
+      if (this.pause) {
+        this.pause = false;
       }
 
       const fileReader = new FileReader();
@@ -196,8 +226,6 @@ export default {
         spark.append(e.target.result);
         const md5FileHash = spark.end(); // 文件的唯一标识
 
-        const { name: filename } = file;
-
         const { exist, url, chunks: successChunks } = await adapter.getFileChunk({ id: md5FileHash });
         if (exist) {
           this.fileTableData.push({
@@ -206,27 +234,45 @@ export default {
           });
           return;
         }
-        let chunks = 3;
-        let chunkSize = Math.ceil(file.size / chunks);
+        let successFlag = successChunks.length || 0;
+
+
+        this.$set(this.uploadingFiles, filename, {
+          file,
+          chunks: []
+        });
+
+
+        let chunks = null;
+        let chunkSize = null;
         if (this.chunkType === '1') {
           chunks = this.chunkValue;
           chunkSize = Math.ceil(file.size / chunks);
-        }
-        if (this.chunkType === '2') {
+        } else if (this.chunkType === '2') {
           chunkSize = this.chunkValue * 1024;
           chunks = Math.ceil(file.size / chunkSize);
+        } else {
+          return;
+        }
+        if (successFlag >= chunks) {
+          this.uploadSuccess({ filename, md5FileHash });
         }
 
-        this.sucessChip.all += chunks;
-        // const chunkSize = 1000; // Read in chunks of 2MB
-
-
-        let successFlag = 0;
-        let failNum = 0;
         const { CancelToken } = axios;
         this.cancelUpload = CancelToken.source();
+        const delay = time => new Promise(resolve => setTimeout(resolve, time));
         for (let index = 0; index < chunks; index += 1) {
-          if (!successChunks.includes(index)) {
+          if (this.pause) return;
+
+          this.uploadingFiles[filename].chunks.push({
+            chipIndex: index,
+            progress: 0
+          });
+          if (successChunks.includes(String(index))) {
+            this.uploadingFiles[filename].chunks[index].progress = 100;
+          }
+
+          if (!successChunks.includes(String(index))) {
             const end = (index + 1) * chunkSize >= file.size ? file.size : (index + 1) * chunkSize;
             const formData = new FormData();
 
@@ -234,48 +280,57 @@ export default {
             formData.set('id', md5FileHash);
             formData.set('file', file.slice(index * chunkSize, end));
 
-            let maxUploadNum = 3; // 最大尝试上传失败分片文件次数;
+            let maxUploadNum = 4; // 最大尝试上传失败分片文件次数;
 
             // 上传文件流
             const uploadChunkFunc = () => {
-              adapter.upload(formData, { cancelToken: this.cancelUpload.token }).then(() => {
-                successFlag += 1;
-                this.sucessChip.success += 1;
+              adapter.upload(formData, {
+                cancelToken: this.cancelUpload.token,
 
-                if (successFlag === chunks) {
-                  setTimeout(async () => {
-                    // eslint-disable-next-line no-shadow
-                    const { url } = await adapter.uploadSuccess({ filename, id: md5FileHash });
-                    this.fileTableData.push({
-                      filename,
-                      url,
-                      failNum
-                    });
-                  }, this.intervalTime);
+                // 对原生进度事件的处理
+                onUploadProgress: (progressEvent) => {
+                  const { loaded, total } = progressEvent;
+                  const currentProgress = ((loaded / total) * 100).toFixed(0);
+                  this.uploadingFiles[filename].chunks[index].progress = currentProgress;
+                }
+              }).then(() => {
+                successFlag += 1;
+                if (successFlag >= chunks) {
+                  this.uploadSuccess({ filename, md5FileHash });
                 }
               }).catch(() => {
                 if (this.pause) return;
                 // 上传失败，继续进行请求
                 maxUploadNum -= 1;
 
-                failNum += 1;
-                this.sucessChip.fail += 1;
-
                 if (maxUploadNum > 0) {
                   uploadChunkFunc();
                 } else {
                   this.fileTableData.push({
                     filename,
-                    failNum
                   });
                 }
               });
             };
             uploadChunkFunc();
+
+            // 分片间隔时间
+            // eslint-disable-next-line no-await-in-loop
+            await delay(this.intervalTime);
           }
         }
       };
     },
+
+    async uploadSuccess({ filename, md5FileHash }) {
+      // eslint-disable-next-line no-shadow
+      const { file: { url } } = await adapter.uploadSuccess({ filename, id: md5FileHash });
+      this.fileTableData.push({
+        filename,
+        url,
+      });
+      this.$delete(this.uploadingFiles, filename);
+    }
 
   }
 };
@@ -291,13 +346,20 @@ export default {
   background: #fafafa;
 }
 
-.bigfile-config {
-  margin-left: 100px;
+.bigfile-upload {
+  margin: 0 100px;
+}
+
+.bigfile-uploading {
+  width: 310px;
+}
+
+.bigfile-main-title {
+  margin-bottom: 24px;
 }
 
 h2 {
   margin: 24px 0 8px;
 }
-
 
 </style>
