@@ -45,7 +45,7 @@ module.exports = appInfo => {
     multipart,
     static: {
       prefix: '/',
-      index: '/public',
+      dir: [ 'app/public', 'app/public/web' ],
     },
   };
 };

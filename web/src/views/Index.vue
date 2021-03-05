@@ -226,6 +226,7 @@ export default {
         spark.append(e.target.result);
         const md5FileHash = spark.end(); // 文件的唯一标识
 
+        // 判断文件或其分片上传情况
         const { exist, url, chunks: successChunks } = await adapter.getFileChunk({ id: md5FileHash });
         if (exist) {
           this.fileTableData.push({
@@ -234,15 +235,14 @@ export default {
           });
           return;
         }
-        let successFlag = successChunks.length || 0;
-
+        let successFlag = successChunks.length || 0; // 记录分片上传成功数量
 
         this.$set(this.uploadingFiles, filename, {
           file,
           chunks: []
         });
 
-
+        // 计算文件分片数量与大小
         let chunks = null;
         let chunkSize = null;
         if (this.chunkType === '1') {
@@ -254,13 +254,14 @@ export default {
         } else {
           return;
         }
+
         if (successFlag >= chunks) {
           this.uploadSuccess({ filename, md5FileHash });
         }
 
         const { CancelToken } = axios;
         this.cancelUpload = CancelToken.source();
-        const delay = time => new Promise(resolve => setTimeout(resolve, time));
+        const delay = time => new Promise(resolve => setTimeout(resolve, time)); // sleep函数
         for (let index = 0; index < chunks; index += 1) {
           if (this.pause) return;
 
@@ -278,7 +279,7 @@ export default {
 
             formData.set('index', index);
             formData.set('id', md5FileHash);
-            formData.set('file', file.slice(index * chunkSize, end));
+            formData.set('file', file.slice(index * chunkSize, end)); // 文件切片
 
             let maxUploadNum = 4; // 最大尝试上传失败分片文件次数;
 
