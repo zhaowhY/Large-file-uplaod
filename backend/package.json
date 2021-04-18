@@ -34,8 +34,8 @@
     "node": ">=10.0.0"
   },
   "scripts": {
-    "start": "egg-scripts start --port=7003 --daemon --title=egg-server-eggBackend",
-    "stop": "egg-scripts stop --title=egg-server-eggBackend",
+    "start": "egg-scripts start --port=7003 --daemon --title=large-file-upload",
+    "stop": "egg-scripts stop --title=large-file-upload",
     "dev": "egg-bin dev --port=7003",
     "dev-https": "egg-bin dev --port=443 --https.key='/Users/zhaowenhao/Desktop/https-test/ca.key' --https.cert='/Users/zhaowenhao/Desktop/https-test/ca.crt'",
     "debug": "egg-bin debug",
