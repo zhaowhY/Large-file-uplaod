@@ -2,7 +2,7 @@
 
 ## 项目地址
 **[在线访问地址](http://39.105.108.226:7003/index.html)**  
-**[Github地址](https://github.com/kongkong99/Large-file-uplaod)**
+**[Github地址](https://github.com/zhaowhy/Large-file-uplaod)**
 
 **界面截图:**  
 <img src="./assets/界面截图.png" width="550px" alt="">  
